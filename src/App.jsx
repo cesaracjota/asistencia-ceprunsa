@@ -23,18 +23,23 @@ function Header({ hasData, onReset, onOpenConfig }) {
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 1.5rem', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
         
         {/* Brand (Left) */}
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <img 
-            src="https://cepre-frontend.vercel.app/assets/logo-light-Cxe8wEJC.png" 
-            alt="CEPRUNSA Logo" 
-            style={{ 
-              height: 36, 
-              objectFit: 'contain',
-              backgroundColor: '#ffffff',
-              padding: '4px 10px',
-              borderRadius: '6px'
-            }} 
-          />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            width: 32, height: 32, borderRadius: 8,
+            background: 'linear-gradient(135deg, var(--brand-maroon) 0%, #8a1f36 100%)',
+            boxShadow: '0 0 20px rgba(104,21,39,0.3)',
+          }}>
+            <GraduationCap style={{ color: '#fff', width: 18, height: 18 }} />
+          </div>
+          <div>
+            <h1 style={{ fontSize: '0.95rem', fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1.1, color: 'var(--text-primary)' }}>
+              ASISTENCIA CEPRU
+            </h1>
+            <p style={{ fontSize: '0.65rem', color: 'var(--accent-blue)', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+              Procesador Local
+            </p>
+          </div>
         </div>
 
         {/* Right actions */}
@@ -137,7 +142,7 @@ export default function App() {
               }}>
                 Control de{' '}
                 <span style={{
-                  background: 'linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-cyan) 100%)',
+                  background: 'linear-gradient(135deg, var(--brand-gold) 0%, #e2cba6 100%)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text',

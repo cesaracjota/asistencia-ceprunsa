@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Search, ArrowUpDown, ArrowUp, ArrowDown, FileDown, FileSpreadsheet, Loader2 } from 'lucide-react';
 import { formatMinutes } from '../utils/parseAttendance';
 import * as XLSX from 'xlsx';
@@ -101,6 +101,7 @@ export default function AttendanceTable({ records, fileName, thresholdMinutes })
   const [sort, setSort] = useState({ column: 'apellido', direction: 'asc' });
   const [filterStatus, setFilterStatus] = useState('all');
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [selectedRow, setSelectedRow] = useState(null);
 
   const handleSort = (col) => {
     setSort((prev) =>
@@ -141,6 +142,39 @@ export default function AttendanceTable({ records, fileName, thresholdMinutes })
     });
     return data;
   }, [evaluated, search, sort, filterStatus]);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (!selectedRow) return;
+
+      if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+        e.preventDefault();
+
+        const currentIndex = filtered.findIndex((r) => r.email === selectedRow);
+        if (currentIndex === -1) return;
+
+        let nextIndex = currentIndex;
+        if (e.key === 'ArrowUp' && currentIndex > 0) {
+          nextIndex = currentIndex - 1;
+        } else if (e.key === 'ArrowDown' && currentIndex < filtered.length - 1) {
+          nextIndex = currentIndex + 1;
+        }
+
+        if (nextIndex !== currentIndex) {
+          const nextEmail = filtered[nextIndex].email;
+          setSelectedRow(nextEmail);
+
+          const rowElement = document.getElementById(`row-${nextEmail}`);
+          if (rowElement) {
+            rowElement.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+          }
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedRow, filtered]);
 
   const handlePDF = async () => {
     setPdfLoading(true);
@@ -330,7 +364,6 @@ export default function AttendanceTable({ records, fileName, thresholdMinutes })
                   Nombre <SortIcon column="nombre" sort={sort} />
                 </button>
               </th>
-              <th style={{ ...thStyle, minWidth: 160 }}>Correo</th>
               <th style={thStyle}>
                 <button style={sortBtnStyle} onClick={() => handleSort('minutes')}>
                   Duración <SortIcon column="minutes" sort={sort} />
@@ -342,42 +375,40 @@ export default function AttendanceTable({ records, fileName, thresholdMinutes })
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={6} style={{ ...tdStyle, textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
+                <td colSpan={5} style={{ ...tdStyle, textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
                   No se encontraron registros.
                 </td>
               </tr>
             ) : (
-              filtered.map((r, i) => (
-                <tr
-                  key={`${r.email}-${i}`}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.025)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                  style={{ transition: 'background 0.15s' }}
-                >
-                  <td style={{ ...tdStyle, textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.75rem' }}>
-                    {i + 1}
-                  </td>
-                  <td style={{ ...tdStyle, fontWeight: 600 }}>{r.apellido}</td>
-                  <td style={{ ...tdStyle, color: 'var(--text-secondary)' }}>{r.nombre}</td>
-                  <td style={{
-                    ...tdStyle,
-                    color: 'var(--text-muted)',
-                    fontSize: '0.78rem',
-                    maxWidth: 180,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}>
-                    {r.email}
-                  </td>
-                  <td style={tdStyle}>
-                    <DurationBar minutes={r.minutes} thresholdMinutes={thresholdMinutes} />
-                  </td>
-                  <td style={{ ...tdStyle, textAlign: 'center' }}>
-                    <StatusBadge status={r.status} />
-                  </td>
-                </tr>
-              ))
+              filtered.map((r, i) => {
+                const isSelected = selectedRow === r.email;
+                return (
+                  <tr
+                    id={`row-${r.email}`}
+                    key={`${r.email}-${i}`}
+                    onClick={() => setSelectedRow(isSelected ? null : r.email)}
+                    onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+                    onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = 'transparent'; }}
+                    style={{ 
+                      transition: 'background 0.15s', 
+                      background: isSelected ? 'rgba(188, 157, 128, 0.15)' : 'transparent',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <td style={{ ...tdStyle, textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.75rem' }}>
+                      {i + 1}
+                    </td>
+                    <td style={{ ...tdStyle, fontWeight: 600 }}>{r.apellido}</td>
+                    <td style={{ ...tdStyle, color: '#cbd5e1' }}>{r.nombre}</td>
+                    <td style={tdStyle}>
+                      <DurationBar minutes={r.minutes} thresholdMinutes={thresholdMinutes} />
+                    </td>
+                    <td style={{ ...tdStyle, textAlign: 'center' }}>
+                      <StatusBadge status={r.status} />
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
