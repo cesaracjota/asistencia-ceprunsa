@@ -64,7 +64,7 @@ function Header({ hasData, onReset, onOpenConfig }) {
 
 // ─── Column hints ────────────────────────────────────────────────────────────
 const EXPECTED_COLUMNS = [
-  'Nombre', 'Apellido', 'Correo electrónico',
+  'Apellido', 'Nombre', 'Correo electrónico',
   'Duración', 'Hora a la que se unió', 'Hora a la que abandonó la reunión',
 ];
 

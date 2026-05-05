@@ -45,8 +45,9 @@ export function getAttendanceStatus(minutes) {
  */
 function isValidRow(row) {
   const email = (row['Correo electrónico'] || row['Correo electronico'] || row['Email'] || '').toString().trim();
-  const nombre = (row['Nombre'] || '').toString().trim().toLowerCase();
-  const apellido = (row['Apellido'] || '').toString().trim().toLowerCase();
+  // El usuario indica que los datos están invertidos en su Excel:
+  const apellido = (row['Nombre'] || row['Nombres'] || '').toString().trim().toUpperCase();
+  const nombre = (row['Apellido'] || row['Apellidos'] || '').toString().trim().toUpperCase();
 
   // Must contain '@' to be a valid email
   if (!email.includes('@')) return false;
@@ -80,8 +81,9 @@ export function processAttendanceData(rawRows) {
     .map(normalizeHeaders)
     .filter(isValidRow)
     .map((row) => {
-      const nombre = (row['Nombre'] || '').toString().trim();
-      const apellido = (row['Apellido'] || '').toString().trim();
+      // Intercambiamos el mapeo según la indicación del usuario de que los Nombres aparecían en los Apellidos
+      const apellido = (row['Nombre'] || row['Nombres'] || '').toString().trim().toUpperCase();
+      const nombre = (row['Apellido'] || row['Apellidos'] || '').toString().trim().toUpperCase();
       const email = (row['Correo electrónico'] || row['Correo electronico'] || row['Email'] || '').toString().trim();
       const duracionRaw = (row['Duración'] || row['Duracion'] || row['Duration'] || '').toString().trim();
       const joined = (row['Hora a la que se unió'] || row['Hora a la que se unio'] || row['Join Time'] || '').toString().trim();
