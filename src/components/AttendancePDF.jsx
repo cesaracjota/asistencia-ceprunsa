@@ -120,12 +120,6 @@ const S = StyleSheet.create({
     opacity: 0.5,
     marginBottom: 18,
   },
-  goldDividerFull: {
-    height: 1,
-    backgroundColor: GOLD,
-    opacity: 0.4,
-    marginVertical: 10,
-  },
 
   // ── SUMMARY BOXES ──────────────────────────────────────────────────────────
   summaryRow: {
@@ -211,41 +205,35 @@ const S = StyleSheet.create({
     fontFamily: 'Helvetica-Bold',
   },
 
-  // STATUS PILL
+  // STATUS PILL COMPACT
   badgeA: {
     backgroundColor: '#DCFCE7',
-    borderRadius: 99,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    alignSelf: 'flex-start',
+    width: 14, height: 14, borderRadius: 7,
+    alignItems: 'center', justifyContent: 'center',
+    marginHorizontal: 'auto'
   },
   badgeAText: {
-    fontSize: 7.5,
-    fontFamily: 'Helvetica-Bold',
-    color: GREEN,
-    letterSpacing: 0.5,
+    fontSize: 6, fontFamily: 'Helvetica-Bold', color: GREEN,
   },
   badgeF: {
     backgroundColor: '#FEE2E2',
-    borderRadius: 99,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    alignSelf: 'flex-start',
+    width: 14, height: 14, borderRadius: 7,
+    alignItems: 'center', justifyContent: 'center',
+    marginHorizontal: 'auto'
   },
   badgeFText: {
-    fontSize: 7.5,
-    fontFamily: 'Helvetica-Bold',
-    color: RED,
-    letterSpacing: 0.5,
+    fontSize: 6, fontFamily: 'Helvetica-Bold', color: RED,
+  },
+  badgeEmpty: {
+    fontSize: 8, color: TEXT_LIGHT, textAlign: 'center'
   },
 
-  // COL WIDTHS (total ~100%)
-  colNum:      { width: '6%' },
-  colApellido: { width: '18%' },
-  colNombre:   { width: '18%' },
-  colEmail:    { width: '30%' },
-  colDur:      { width: '16%' },
-  colStatus:   { width: '12%' },
+  // COL WIDTHS
+  colNum:      { width: '6%', textAlign: 'center' },
+  colNombre:   { width: '28%' },
+  colEmail:    { width: '28%' },
+  colDay:      { width: '5%', textAlign: 'center' },
+  colTotal:    { width: '8%', textAlign: 'center', fontFamily: 'Helvetica-Bold' },
 
   // ── SIGNATURE / SEAL (Page 1) ───────────────────────────────────────────────
   sigSection: {
@@ -288,72 +276,6 @@ const S = StyleSheet.create({
     color: GOLD,
     fontFamily: 'Helvetica-Bold',
     textAlign: 'center',
-  },
-
-  // ── PAGE 2 HEADER BAND ─────────────────────────────────────────────────────
-  page2HeaderBand: {
-    backgroundColor: NAVY,
-    marginHorizontal: -44,
-    marginTop: -44,
-    paddingHorizontal: 44,
-    paddingVertical: 16,
-    marginBottom: 24,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  page2Title: {
-    fontSize: 14,
-    fontFamily: 'Helvetica-Bold',
-    color: GOLD,
-    letterSpacing: 1,
-  },
-  page2Subtitle: {
-    fontSize: 8,
-    color: '#94A3B8',
-    marginTop: 3,
-  },
-
-  // ── SECTION TITLE ──────────────────────────────────────────────────────────
-  sectionTitle: {
-    fontSize: 9,
-    fontFamily: 'Helvetica-Bold',
-    color: NAVY,
-    borderLeft: `3 solid ${GOLD}`,
-    paddingLeft: 8,
-    marginTop: 16,
-    marginBottom: 8,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-
-  // ── STATS GRID (Page 2) ─────────────────────────────────────────────────────
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 16,
-  },
-  statCard: {
-    width: '22%',
-    backgroundColor: GRAY_LIGHT,
-    border: `1 solid ${GRAY_MID}`,
-    borderRadius: 5,
-    padding: 10,
-    alignItems: 'center',
-  },
-  statValue: {
-    fontSize: 18,
-    fontFamily: 'Helvetica-Bold',
-    color: NAVY,
-    marginBottom: 2,
-  },
-  statLabel: {
-    fontSize: 6.5,
-    color: TEXT_MID,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    fontFamily: 'Helvetica-Bold',
   },
 
   // ── FOOTER ─────────────────────────────────────────────────────────────────
@@ -414,79 +336,44 @@ function GoldDivider() {
 }
 
 function StatusBadge({ status }) {
+  if (!status) return <Text style={S.badgeEmpty}>-</Text>;
   return status === 'A' ? (
-    <View style={S.badgeA}><Text style={S.badgeAText}>Asistencia</Text></View>
+    <View style={S.badgeA}><Text style={S.badgeAText}>A</Text></View>
   ) : (
-    <View style={S.badgeF}><Text style={S.badgeFText}>Falta</Text></View>
-  );
-}
-
-// Reusable table header
-function TableHeader() {
-  return (
-    <View style={S.tableHeaderRow} fixed>
-      <Text style={[S.tableHeaderCell, S.colNum]}>#</Text>
-      <Text style={[S.tableHeaderCell, S.colApellido]}>Apellido</Text>
-      <Text style={[S.tableHeaderCell, S.colNombre]}>Nombre</Text>
-      <Text style={[S.tableHeaderCell, S.colEmail]}>Correo</Text>
-      <Text style={[S.tableHeaderCell, S.colDur]}>Duración</Text>
-      <Text style={[S.tableHeaderCell, S.colStatus]}>Estado</Text>
-    </View>
-  );
-}
-
-function TableRow({ record, index }) {
-  const isAlt = index % 2 === 1;
-  return (
-    <View style={[S.tableRow, isAlt && S.tableRowAlt]} wrap={false}>
-      <Text style={[S.tableCellMuted, S.colNum]}>{index + 1}</Text>
-      <Text style={[S.tableCellBold, S.colApellido]}>{record.apellido}</Text>
-      <Text style={[S.tableCell, S.colNombre]}>{record.nombre}</Text>
-      <Text style={[S.tableCellMuted, S.colEmail]} numberOfLines={1}>{record.email}</Text>
-      <Text style={[S.tableCell, S.colDur]}>{formatMinutes(record.minutes)}</Text>
-      <View style={S.colStatus}>
-        <StatusBadge status={record.status} />
-      </View>
-    </View>
+    <View style={S.badgeF}><Text style={S.badgeFText}>F</Text></View>
   );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DOCUMENT COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
-export function AttendancePDFDocument({ records, thresholdMinutes, fileName }) {
+export function AttendancePDFDocument({ records, activeDays, thresholdMinutes }) {
   const now = new Date();
   const dateStr = formatDateLong(now);
   const timeStr = formatTime(now);
 
-  // Stats
-  const total = records.length;
-  const asistencias = records.filter((r) => r.minutes >= thresholdMinutes).length;
-  const faltas = total - asistencias;
-  const avgMin = total > 0
-    ? Math.round(records.reduce((acc, r) => acc + r.minutes, 0) / total)
-    : 0;
-  const pctA = total > 0 ? ((asistencias / total) * 100).toFixed(1) : '0.0';
-  const pctF = total > 0 ? (100 - parseFloat(pctA)).toFixed(1) : '0.0';
+  const totalStudents = records.length;
+  let perfectAttendances = 0;
+  let studentsWithMisses = 0;
+  let totalAttendances = 0;
 
-  // Live status based on current threshold
-  const evaluated = records.map((r) => ({
-    ...r,
-    status: r.minutes >= thresholdMinutes ? 'A' : 'F',
-  }));
+  records.forEach(r => {
+    totalAttendances += r.totalA;
+    if (r.totalF === 0 && r.totalA > 0) perfectAttendances++;
+    if (r.totalF > 0) studentsWithMisses++;
+  });
 
-  const sourceFile = fileName || 'Reporte de sesión';
+  const avgDays = totalStudents > 0 ? (totalAttendances / totalStudents).toFixed(1) : '0.0';
+  const pctPerfect = totalStudents > 0 ? ((perfectAttendances / totalStudents) * 100).toFixed(1) : '0.0';
+  const pctMissed = totalStudents > 0 ? ((studentsWithMisses / totalStudents) * 100).toFixed(1) : '0.0';
 
   return (
     <Document
-      title="Reporte de Asistencia — CEPRUNSA"
+      title="Reporte de Asistencia Semanal — CEPRUNSA"
       author="Sistema Asistencia CEPRUNSA"
-      subject="Control de Asistencia"
+      subject="Control de Asistencia Multidía"
       creator="Asistencia CEPRUNSA"
     >
-      {/* ================================================================
-          PAGE 1 — PORTADA + TABLA PRINCIPAL
-      ================================================================ */}
       <Page size="A4" style={S.page}>
         <FrameDecor />
         <Text style={S.watermark}>CEPRUNSA</Text>
@@ -495,14 +382,14 @@ export function AttendancePDFDocument({ records, thresholdMinutes, fileName }) {
         <View style={S.headerBand}>
           <View>
             <Text style={S.brandLabel}>Universidad Nacional de San Agustín</Text>
-            <Text style={S.headerTitle}>Reporte de Asistencia</Text>
-            <Text style={S.headerSubtitle}>Archivo: {sourceFile}</Text>
+            <Text style={S.headerTitle}>Reporte de Asistencia Semanal</Text>
+            <Text style={S.headerSubtitle}>Consolidado multidía por estudiante</Text>
           </View>
           <View style={S.headerRight}>
             <Text style={S.headerDateLabel}>Generado el</Text>
             <Text style={S.headerDate}>{dateStr}</Text>
             <Text style={S.headerThreshold}>
-              Umbral: {formatMinutes(thresholdMinutes)} mínimo → Asistencia (A)
+              Umbral: {formatMinutes(thresholdMinutes)} por día
             </Text>
           </View>
         </View>
@@ -512,39 +399,61 @@ export function AttendancePDFDocument({ records, thresholdMinutes, fileName }) {
         {/* Summary boxes */}
         <View style={S.summaryRow}>
           <View style={[S.summaryBox, S.summaryBoxTotal]}>
-            <Text style={[S.summaryValue, { color: '#1D4ED8' }]}>{total}</Text>
-            <Text style={S.summaryLabel}>Total Evaluados</Text>
-            <Text style={[S.summaryPct, { color: '#3B82F6' }]}>100%</Text>
+            <Text style={[S.summaryValue, { color: '#1D4ED8' }]}>{totalStudents}</Text>
+            <Text style={S.summaryLabel}>Estudiantes Ev.</Text>
+            <Text style={[S.summaryPct, { color: '#3B82F6' }]}>{activeDays.length} días</Text>
           </View>
           <View style={[S.summaryBox, S.summaryBoxA]}>
-            <Text style={[S.summaryValue, { color: GREEN }]}>{asistencias}</Text>
-            <Text style={S.summaryLabel}>Asistencias (A)</Text>
-            <Text style={[S.summaryPct, { color: GREEN }]}>{pctA}%</Text>
+            <Text style={[S.summaryValue, { color: GREEN }]}>{perfectAttendances}</Text>
+            <Text style={S.summaryLabel}>Asist. Perfecta</Text>
+            <Text style={[S.summaryPct, { color: GREEN }]}>{pctPerfect}%</Text>
           </View>
           <View style={[S.summaryBox, S.summaryBoxF]}>
-            <Text style={[S.summaryValue, { color: RED }]}>{faltas}</Text>
-            <Text style={S.summaryLabel}>Faltas (F)</Text>
-            <Text style={[S.summaryPct, { color: RED }]}>{pctF}%</Text>
+            <Text style={[S.summaryValue, { color: RED }]}>{studentsWithMisses}</Text>
+            <Text style={S.summaryLabel}>Con Faltas</Text>
+            <Text style={[S.summaryPct, { color: RED }]}>{pctMissed}%</Text>
           </View>
           <View style={[S.summaryBox, S.summaryBoxAvg]}>
-            <Text style={[S.summaryValue, { color: '#92400E', fontSize: 16 }]}>
-              {formatMinutes(avgMin)}
-            </Text>
-            <Text style={S.summaryLabel}>Duración Promedio</Text>
-            <Text style={[S.summaryPct, { color: '#B45309' }]}>Por participante</Text>
+            <Text style={[S.summaryValue, { color: '#92400E' }]}>{avgDays}</Text>
+            <Text style={S.summaryLabel}>Promedio Días</Text>
+            <Text style={[S.summaryPct, { color: '#B45309' }]}>Por estudiante</Text>
           </View>
         </View>
 
-        {/* Table */}
-        <TableHeader />
-        {evaluated.map((r, i) => (
-          <TableRow key={`${r.email}-${i}`} record={r} index={i} />
+        {/* Table Header */}
+        <View style={S.tableHeaderRow} fixed>
+          <Text style={[S.tableHeaderCell, S.colNum]}>#</Text>
+          <Text style={[S.tableHeaderCell, S.colNombre]}>Apellidos y Nombres</Text>
+          <Text style={[S.tableHeaderCell, S.colEmail]}>Correo</Text>
+          {activeDays.map(day => (
+            <Text key={day.id} style={[S.tableHeaderCell, S.colDay]}>{day.short}</Text>
+          ))}
+          <Text style={[S.tableHeaderCell, S.colTotal]}>Total</Text>
+        </View>
+
+        {/* Table Rows */}
+        {records.map((r, i) => (
+          <View key={r.email} style={[S.tableRow, i % 2 === 1 && S.tableRowAlt]} wrap={false}>
+            <Text style={[S.tableCellMuted, S.colNum]}>{i + 1}</Text>
+            <Text style={[S.tableCellBold, S.colNombre]}>{r.apellido}, {r.nombre}</Text>
+            <Text style={[S.tableCellMuted, S.colEmail]} numberOfLines={1}>{r.email}</Text>
+            
+            {activeDays.map(day => (
+              <View key={day.id} style={S.colDay}>
+                <StatusBadge status={r.attendance[day.id]?.status} />
+              </View>
+            ))}
+
+            <Text style={[S.tableCellBold, S.colTotal, { color: r.totalA > 0 ? GREEN : TEXT_LIGHT }]}>
+              {r.totalA} / {activeDays.length}
+            </Text>
+          </View>
         ))}
 
         {/* Signature */}
         <View style={S.sigSection}>
           <Text style={{ fontSize: 9, fontStyle: 'italic', color: TEXT_MID }}>
-            Sistema de Control de Asistencia
+            Sistema de Control Multidía
           </Text>
           <View style={S.sigLine} />
           <Text style={S.sigName}>ASISTENCIA CEPRUNSA</Text>
@@ -570,106 +479,6 @@ export function AttendancePDFDocument({ records, thresholdMinutes, fileName }) {
           } />
         </View>
       </Page>
-
-      {/* ================================================================
-          PAGE 2 — RESUMEN ANALÍTICO
-      ================================================================ */}
-      <Page size="A4" style={S.page}>
-        <FrameDecor />
-        <Text style={S.watermark}>CEPRUNSA</Text>
-
-        {/* Page 2 header */}
-        <View style={S.page2HeaderBand}>
-          <View>
-            <Text style={S.page2Title}>Informe Analítico de Asistencia</Text>
-            <Text style={S.page2Subtitle}>
-              Umbral de evaluación: {formatMinutes(thresholdMinutes)} · {dateStr}
-            </Text>
-          </View>
-          <Text style={{ fontSize: 9, color: '#64748B', fontFamily: 'Helvetica-Bold' }}>
-            ASISTENCIA CEPRUNSA
-          </Text>
-        </View>
-
-        {/* Section: stats breakdown */}
-        <Text style={S.sectionTitle}>I. Estadísticas Generales</Text>
-        <View style={S.statsGrid}>
-          {[
-            { label: 'Total', val: String(total), color: '#1D4ED8' },
-            { label: 'Asistencias', val: String(asistencias), color: GREEN },
-            { label: 'Faltas', val: String(faltas), color: RED },
-            { label: '% Asistencia', val: `${pctA}%`, color: '#92400E' },
-          ].map((s) => (
-            <View key={s.label} style={S.statCard}>
-              <Text style={[S.statValue, { color: s.color }]}>{s.val}</Text>
-              <Text style={S.statLabel}>{s.label}</Text>
-            </View>
-          ))}
-        </View>
-
-        {/* Section: asistencias list */}
-        <Text style={S.sectionTitle}>II. Participantes con Asistencia (A)</Text>
-        <View style={S.tableHeaderRow}>
-          <Text style={[S.tableHeaderCell, S.colNum]}>#</Text>
-          <Text style={[S.tableHeaderCell, S.colApellido]}>Apellido</Text>
-          <Text style={[S.tableHeaderCell, S.colNombre]}>Nombre</Text>
-          <Text style={[S.tableHeaderCell, S.colEmail]}>Correo</Text>
-          <Text style={[S.tableHeaderCell, { width: '16%' }]}>Duración</Text>
-        </View>
-        {evaluated
-          .filter((r) => r.status === 'A')
-          .map((r, i) => (
-            <View
-              key={`a-${i}`}
-              style={[S.tableRow, i % 2 === 1 && S.tableRowAlt]}
-              wrap={false}
-            >
-              <Text style={[S.tableCellMuted, S.colNum]}>{i + 1}</Text>
-              <Text style={[S.tableCellBold, S.colApellido]}>{r.apellido}</Text>
-              <Text style={[S.tableCell, S.colNombre]}>{r.nombre}</Text>
-              <Text style={[S.tableCellMuted, S.colEmail]}>{r.email}</Text>
-              <Text style={[S.tableCell, { width: '16%', color: GREEN, fontFamily: 'Helvetica-Bold' }]}>
-                {formatMinutes(r.minutes)}
-              </Text>
-            </View>
-          ))}
-
-        {/* Section: faltas list */}
-        <Text style={S.sectionTitle}>III. Participantes con Falta (F)</Text>
-        <View style={S.tableHeaderRow}>
-          <Text style={[S.tableHeaderCell, S.colNum]}>#</Text>
-          <Text style={[S.tableHeaderCell, S.colApellido]}>Apellido</Text>
-          <Text style={[S.tableHeaderCell, S.colNombre]}>Nombre</Text>
-          <Text style={[S.tableHeaderCell, S.colEmail]}>Correo</Text>
-          <Text style={[S.tableHeaderCell, { width: '16%' }]}>Duración</Text>
-        </View>
-        {evaluated
-          .filter((r) => r.status === 'F')
-          .map((r, i) => (
-            <View
-              key={`f-${i}`}
-              style={[S.tableRow, i % 2 === 1 && S.tableRowAlt]}
-              wrap={false}
-            >
-              <Text style={[S.tableCellMuted, S.colNum]}>{i + 1}</Text>
-              <Text style={[S.tableCellBold, S.colApellido]}>{r.apellido}</Text>
-              <Text style={[S.tableCell, S.colNombre]}>{r.nombre}</Text>
-              <Text style={[S.tableCellMuted, S.colEmail]}>{r.email}</Text>
-              <Text style={[S.tableCell, { width: '16%', color: RED, fontFamily: 'Helvetica-Bold' }]}>
-                {formatMinutes(r.minutes)}
-              </Text>
-            </View>
-          ))}
-
-        {/* Footer */}
-        <View style={S.footer} fixed>
-          <Text style={S.footerText}>Asistencia CEPRUNSA · Procesamiento 100% local en el navegador</Text>
-          <Text style={S.footerGold}>CEPRUNSA</Text>
-          <Text style={S.footerText} render={({ pageNumber, totalPages }) =>
-            `Página ${pageNumber} de ${totalPages}`
-          } />
-        </View>
-      </Page>
     </Document>
   );
 }
@@ -677,20 +486,19 @@ export function AttendancePDFDocument({ records, thresholdMinutes, fileName }) {
 // ─────────────────────────────────────────────────────────────────────────────
 // EXPORT UTILITY
 // ─────────────────────────────────────────────────────────────────────────────
-export async function downloadAttendancePDF({ records, thresholdMinutes, fileName }) {
+export async function downloadAttendancePDF({ records, activeDays, thresholdMinutes }) {
   const blob = await pdf(
     <AttendancePDFDocument
       records={records}
+      activeDays={activeDays}
       thresholdMinutes={thresholdMinutes}
-      fileName={fileName}
     />
   ).toBlob();
 
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  const base = fileName ? fileName.replace(/\.[^.]+$/, '') : 'reporte';
-  link.download = `asistencia_${base}.pdf`;
+  link.download = `asistencia_semanal.pdf`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

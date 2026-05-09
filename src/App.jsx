@@ -1,12 +1,21 @@
 import { useState } from 'react';
 import { GraduationCap, RefreshCw, BookOpen, Clock } from 'lucide-react';
-import DropZone from './components/DropZone';
+import DayDropZone from './components/DayDropZone';
 import MetricsRow from './components/MetricsRow';
 import AttendanceTable from './components/AttendanceTable';
 import ThresholdEditor from './components/ThresholdEditor';
-import { useAttendanceFile } from './hooks/useAttendanceFile';
+import { useAttendanceFiles } from './hooks/useAttendanceFile';
 
 const DEFAULT_THRESHOLD = 180; // 3 hours in minutes
+
+const DAYS_OF_WEEK = [
+  { id: 'lunes', label: 'Lunes' },
+  { id: 'martes', label: 'Martes' },
+  { id: 'miercoles', label: 'Miércoles' },
+  { id: 'jueves', label: 'Jueves' },
+  { id: 'viernes', label: 'Viernes' },
+  { id: 'sabado', label: 'Sábado' }
+];
 
 // ─── Header ─────────────────────────────────────────────────────────────────
 function Header({ hasData, onReset, onOpenConfig }) {
@@ -20,7 +29,7 @@ function Header({ hasData, onReset, onOpenConfig }) {
       backdropFilter: 'blur(16px)',
       WebkitBackdropFilter: 'blur(16px)',
     }}>
-      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 1.5rem', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 1.5rem', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
         
         {/* Brand (Left) */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -37,7 +46,7 @@ function Header({ hasData, onReset, onOpenConfig }) {
               ASISTENCIA CEPRU
             </h1>
             <p style={{ fontSize: '0.65rem', color: 'var(--accent-blue)', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-              Procesador Local
+              Procesador Multidía
             </p>
           </div>
         </div>
@@ -55,9 +64,9 @@ function Header({ hasData, onReset, onOpenConfig }) {
                 <Clock style={{ width: 13, height: 13 }} />
                 Umbral
               </button>
-              <button className="btn-ghost" onClick={onReset} aria-label="Cargar nuevo archivo">
+              <button className="btn-ghost" onClick={onReset} aria-label="Limpiar todo">
                 <RefreshCw style={{ width: 13, height: 13 }} />
-                Nuevo
+                Limpiar Todo
               </button>
             </>
           )}
@@ -67,112 +76,103 @@ function Header({ hasData, onReset, onOpenConfig }) {
   );
 }
 
-// ─── Column hints ────────────────────────────────────────────────────────────
-const EXPECTED_COLUMNS = [
-  'Apellido', 'Nombre', 'Correo electrónico',
-  'Duración', 'Hora a la que se unió', 'Hora a la que abandonó la reunión',
-];
-
-function ColumnHints() {
-  return (
-    <div className="glass-card" style={{ padding: '1rem 1.25rem' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-        <BookOpen style={{ width: 14, height: 14, color: 'var(--text-muted)' }} />
-        <p style={{ fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
-          Cabeceras esperadas
-        </p>
-      </div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-        {EXPECTED_COLUMNS.map((col) => (
-          <span key={col} style={{
-            padding: '3px 10px',
-            fontSize: '0.72rem',
-            fontFamily: 'monospace',
-            borderRadius: 5,
-            background: 'rgba(255,255,255,0.04)',
-            color: 'var(--text-secondary)',
-            border: '1px solid rgba(255,255,255,0.07)',
-            letterSpacing: '0.02em',
-          }}>
-            {col}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 // ─── App ─────────────────────────────────────────────────────────────────────
 export default function App() {
-  const { records, fileName, error, isProcessing, processFile, reset } = useAttendanceFile();
+  const { 
+    daysData, 
+    fileNames, 
+    errors, 
+    processingState, 
+    aggregatedRecords, 
+    processFileForDay, 
+    removeFileForDay, 
+    resetAll 
+  } = useAttendanceFiles();
+  
   const [threshold, setThreshold] = useState(DEFAULT_THRESHOLD);
   const [isConfigOpen, setConfigOpen] = useState(false);
-  const hasData = !!records && records.length > 0;
+  const hasData = aggregatedRecords && aggregatedRecords.length > 0;
 
   return (
     <div className="bg-glow" style={{ minHeight: '100vh', position: 'relative' }}>
-      <Header hasData={hasData} onReset={reset} onOpenConfig={() => setConfigOpen(true)} />
+      <Header hasData={hasData} onReset={resetAll} onOpenConfig={() => setConfigOpen(true)} />
 
-      <main style={{ maxWidth: 1100, margin: '0 auto', padding: '2.5rem 1.5rem', position: 'relative', zIndex: 1 }}>
+      <main style={{ maxWidth: 1200, margin: '0 auto', padding: '2.5rem 1.5rem', position: 'relative', zIndex: 1 }}>
 
-        {/* ── Upload view ── */}
+        {/* Hero Section (only when no data) */}
         {!hasData && (
-          <div className="fade-up" style={{ maxWidth: 680, margin: '0 auto' }}>
-            {/* Hero */}
-            <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-              <div style={{
-                display: 'inline-flex', alignItems: 'center', gap: 7,
-                padding: '4px 14px', borderRadius: 99,
-                background: 'rgba(96,165,250,0.08)',
-                border: '1px solid rgba(96,165,250,0.18)',
-                marginBottom: 20,
-              }}>
-                <span className="pulse-dot" style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent-blue)', display: 'inline-block' }} />
-                <span style={{ fontSize: '0.68rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--accent-blue)' }}>
-                  Listo para procesar
-                </span>
-              </div>
-              <h2 style={{
-                fontSize: 'clamp(2rem, 5vw, 2.75rem)',
-                fontWeight: 900,
-                letterSpacing: '-0.03em',
-                lineHeight: 1.1,
-                color: 'var(--text-primary)',
-                marginBottom: 14,
-              }}>
-                Control de{' '}
-                <span style={{
-                  background: 'linear-gradient(135deg, var(--brand-gold) 0%, #e2cba6 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                }}>
-                  Asistencia
-                </span>
-              </h2>
-              <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.7, maxWidth: 480, margin: '0 auto' }}>
-                Sube tu reporte exportado en{' '}
-                <strong style={{ color: 'var(--text-primary)' }}>.xlsx</strong> o{' '}
-                <strong style={{ color: 'var(--text-primary)' }}>.csv</strong>. El sistema
-                evalúa la duración de cada participante y asigna automáticamente{' '}
-                <span style={{ color: 'var(--accent-green)', fontWeight: 600 }}>A</span> o{' '}
-                <span style={{ color: 'var(--accent-red)', fontWeight: 600 }}>F</span>.
-              </p>
+          <div className="fade-up" style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: 7,
+              padding: '4px 14px', borderRadius: 99,
+              background: 'rgba(96,165,250,0.08)',
+              border: '1px solid rgba(96,165,250,0.18)',
+              marginBottom: 20,
+            }}>
+              <span className="pulse-dot" style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent-blue)', display: 'inline-block' }} />
+              <span style={{ fontSize: '0.68rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--accent-blue)' }}>
+                Listo para procesar
+              </span>
             </div>
-
-            {/* Drop zone */}
-            <div style={{ marginBottom: 16 }}>
-              <DropZone onFile={processFile} isProcessing={isProcessing} fileName={fileName} error={error} />
-            </div>
-
-            {/* Column hints */}
-            <ColumnHints />
+            <h2 style={{
+              fontSize: 'clamp(2rem, 5vw, 2.75rem)',
+              fontWeight: 900,
+              letterSpacing: '-0.03em',
+              lineHeight: 1.1,
+              color: 'var(--text-primary)',
+              marginBottom: 14,
+            }}>
+              Control de{' '}
+              <span style={{
+                background: 'linear-gradient(135deg, var(--brand-gold) 0%, #e2cba6 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}>
+                Asistencia Semanal
+              </span>
+            </h2>
+            <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.7, maxWidth: 540, margin: '0 auto' }}>
+              Sube tus reportes (.xlsx o .csv) en cada día correspondiente. El sistema
+              evalúa la duración, asigna automáticamente asistencias y faltas, y consolida
+              los datos por estudiante de manera profesional.
+            </p>
           </div>
         )}
 
+        {/* Days Grid - Always visible so user can add/remove days */}
+        <div className={`fade-up ${hasData ? 'mb-6' : ''}`}>
+          <div className="glass-card" style={{ padding: '1.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+              <h3 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Archivos por Día
+              </h3>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <BookOpen style={{ width: 14, height: 14, color: 'var(--text-muted)' }} />
+                <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Cabeceras: Correo electrónico, Duración, Nombre, Apellido</span>
+              </div>
+            </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '1rem' }}>
+              {DAYS_OF_WEEK.map((day) => (
+                <DayDropZone
+                  key={day.id}
+                  dayId={day.id}
+                  dayLabel={day.label}
+                  onFile={processFileForDay}
+                  onRemove={removeFileForDay}
+                  isProcessing={processingState[day.id]}
+                  fileName={fileNames[day.id]}
+                  error={errors[day.id]}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+
         {/* ── Data dashboard ── */}
         {hasData && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div className="fade-up" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
             {/* Threshold editor Modal */}
             <ThresholdEditor 
               isOpen={isConfigOpen} 
@@ -182,10 +182,18 @@ export default function App() {
             />
 
             {/* Metrics */}
-            <MetricsRow records={records} thresholdMinutes={threshold} />
+            <MetricsRow 
+              aggregatedRecords={aggregatedRecords} 
+              daysData={daysData}
+              thresholdMinutes={threshold} 
+            />
 
             {/* Table */}
-            <AttendanceTable records={records} fileName={fileName} thresholdMinutes={threshold} />
+            <AttendanceTable 
+              aggregatedRecords={aggregatedRecords} 
+              daysData={daysData}
+              thresholdMinutes={threshold} 
+            />
           </div>
         )}
       </main>

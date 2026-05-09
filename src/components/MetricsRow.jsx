@@ -1,5 +1,4 @@
-import { Users, UserCheck, UserX, Clock } from 'lucide-react';
-import { formatMinutes } from '../utils/parseAttendance';
+import { Users, UserCheck, UserX, CalendarCheck } from 'lucide-react';
 
 function MetricCard({ title, value, sub, cardClass, valueClass, icon: Icon, iconStyle }) {
   return (
@@ -44,52 +43,78 @@ function MetricCard({ title, value, sub, cardClass, valueClass, icon: Icon, icon
   );
 }
 
-export default function MetricsRow({ records, thresholdMinutes }) {
-  const total = records.length;
-  // Re-evaluate against current threshold (same logic as AttendanceTable)
-  const asistencias = records.filter((r) => r.minutes >= thresholdMinutes).length;
-  const faltas = total - asistencias;
-  const avgMin = total > 0
-    ? Math.round(records.reduce((acc, r) => acc + r.minutes, 0) / total)
-    : 0;
-  const pctA = total > 0 ? ((asistencias / total) * 100).toFixed(1) : '0.0';
-  const pctF = total > 0 ? (100 - parseFloat(pctA)).toFixed(1) : '0.0';
+export default function MetricsRow({ aggregatedRecords, daysData, thresholdMinutes }) {
+  if (!aggregatedRecords) return null;
+  const totalStudents = aggregatedRecords.length;
+  
+  const activeDaysCount = Object.values(daysData).filter(records => records && records.length > 0).length;
+
+  let perfectAttendances = 0;
+  let studentsWithMisses = 0;
+  let totalAttendances = 0;
+
+  aggregatedRecords.forEach(student => {
+    let studentTotalA = 0;
+    let studentTotalF = 0;
+    
+    // Evaluate for active days
+    Object.keys(daysData).forEach(dayId => {
+      const records = daysData[dayId];
+      if (records && records.length > 0) {
+        const d = student.attendance[dayId];
+        if (d && d.minutes >= thresholdMinutes) {
+          studentTotalA++;
+        } else {
+          studentTotalF++;
+        }
+      }
+    });
+
+    totalAttendances += studentTotalA;
+
+    if (studentTotalF === 0 && studentTotalA > 0) perfectAttendances++;
+    if (studentTotalF > 0) studentsWithMisses++;
+  });
+
+  const avgDays = totalStudents > 0 ? (totalAttendances / totalStudents).toFixed(1) : '0.0';
+  const pctPerfect = totalStudents > 0 ? ((perfectAttendances / totalStudents) * 100).toFixed(1) : '0.0';
+  const pctMissed = totalStudents > 0 ? ((studentsWithMisses / totalStudents) * 100).toFixed(1) : '0.0';
 
   const cards = [
     {
-      title: 'Total Evaluados',
-      value: total,
-      sub: '100%',
+      title: 'Total Estudiantes',
+      value: totalStudents,
+      sub: `${activeDaysCount} días ev.`,
       cardClass: 'glass-card-blue fade-up-1',
       valueClass: 'neon-blue',
       icon: Users,
       iconStyle: { bg: 'rgba(96,165,250,0.12)', color: 'var(--accent-blue)' },
     },
     {
-      title: 'Asistencias (A)',
-      value: asistencias,
-      sub: `${pctA}%`,
+      title: 'Asistencia Perfecta',
+      value: perfectAttendances,
+      sub: `${pctPerfect}%`,
       cardClass: 'glass-card-green fade-up-2',
       valueClass: 'neon-green',
       icon: UserCheck,
       iconStyle: { bg: 'rgba(52,211,153,0.12)', color: 'var(--accent-green)' },
     },
     {
-      title: 'Faltas (F)',
-      value: faltas,
-      sub: `${pctF}%`,
+      title: 'Con Faltas',
+      value: studentsWithMisses,
+      sub: `${pctMissed}%`,
       cardClass: 'glass-card-red fade-up-3',
       valueClass: 'neon-red',
       icon: UserX,
       iconStyle: { bg: 'rgba(248,113,113,0.12)', color: 'var(--accent-red)' },
     },
     {
-      title: 'Duración Promedio',
-      value: formatMinutes(avgMin),
-      sub: `mín: ${formatMinutes(thresholdMinutes)}`,
+      title: 'Promedio Asistencia',
+      value: avgDays,
+      sub: `de ${activeDaysCount} días`,
       cardClass: 'glass-card-amber fade-up-4',
       valueClass: 'neon-amber',
-      icon: Clock,
+      icon: CalendarCheck,
       iconStyle: { bg: 'rgba(251,191,36,0.12)', color: 'var(--accent-amber)' },
     },
   ];

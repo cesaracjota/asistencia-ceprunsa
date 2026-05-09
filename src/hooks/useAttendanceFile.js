@@ -1,17 +1,17 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import * as XLSX from 'xlsx';
-import { processAttendanceData } from '../utils/parseAttendance';
+import { processAttendanceData, aggregateAttendanceData } from '../utils/parseAttendance';
 
 /**
- * Custom hook to handle file reading via XLSX and processing attendance data.
+ * Custom hook to handle multiple file readings via XLSX by day of the week.
  */
-export function useAttendanceFile() {
-  const [records, setRecords] = useState(null);
-  const [fileName, setFileName] = useState('');
-  const [error, setError] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
+export function useAttendanceFiles() {
+  const [daysData, setDaysData] = useState({});
+  const [fileNames, setFileNames] = useState({});
+  const [errors, setErrors] = useState({});
+  const [processingState, setProcessingState] = useState({});
 
-  const processFile = useCallback((file) => {
+  const processFileForDay = useCallback((dayId, file) => {
     if (!file) return;
 
     const isValid =
@@ -20,13 +20,13 @@ export function useAttendanceFile() {
       file.name.endsWith('.csv');
 
     if (!isValid) {
-      setError('Formato no soportado. Por favor sube un archivo .xlsx, .xls o .csv');
+      setErrors(prev => ({ ...prev, [dayId]: 'Formato no soportado.' }));
       return;
     }
 
-    setError('');
-    setIsProcessing(true);
-    setFileName(file.name);
+    setErrors(prev => ({ ...prev, [dayId]: '' }));
+    setProcessingState(prev => ({ ...prev, [dayId]: true }));
+    setFileNames(prev => ({ ...prev, [dayId]: file.name }));
 
     const reader = new FileReader();
 
@@ -45,36 +45,55 @@ export function useAttendanceFile() {
         const processed = processAttendanceData(rawRows);
 
         if (processed.length === 0) {
-          setError(
-            'No se encontraron registros válidos en el archivo. Verifica que las cabeceras sean correctas y que los correos contengan "@".'
-          );
-          setIsProcessing(false);
+          setErrors(prev => ({
+            ...prev,
+            [dayId]: 'No se encontraron registros válidos.'
+          }));
+          setProcessingState(prev => ({ ...prev, [dayId]: false }));
           return;
         }
 
-        setRecords(processed);
-        setIsProcessing(false);
+        setDaysData(prev => ({ ...prev, [dayId]: processed }));
+        setProcessingState(prev => ({ ...prev, [dayId]: false }));
       } catch (err) {
         console.error(err);
-        setError('Error al procesar el archivo. Asegúrate de que no esté corrupto.');
-        setIsProcessing(false);
+        setErrors(prev => ({ ...prev, [dayId]: 'Error al procesar el archivo.' }));
+        setProcessingState(prev => ({ ...prev, [dayId]: false }));
       }
     };
 
     reader.onerror = () => {
-      setError('Error al leer el archivo.');
-      setIsProcessing(false);
+      setErrors(prev => ({ ...prev, [dayId]: 'Error al leer el archivo.' }));
+      setProcessingState(prev => ({ ...prev, [dayId]: false }));
     };
 
     reader.readAsArrayBuffer(file);
   }, []);
 
-  const reset = useCallback(() => {
-    setRecords(null);
-    setFileName('');
-    setError('');
-    setIsProcessing(false);
+  const removeFileForDay = useCallback((dayId) => {
+    setDaysData(prev => { const n = { ...prev }; delete n[dayId]; return n; });
+    setFileNames(prev => { const n = { ...prev }; delete n[dayId]; return n; });
+    setErrors(prev => { const n = { ...prev }; delete n[dayId]; return n; });
+    setProcessingState(prev => { const n = { ...prev }; delete n[dayId]; return n; });
   }, []);
 
-  return { records, fileName, error, isProcessing, processFile, reset };
+  const resetAll = useCallback(() => {
+    setDaysData({});
+    setFileNames({});
+    setErrors({});
+    setProcessingState({});
+  }, []);
+
+  const aggregatedRecords = useMemo(() => aggregateAttendanceData(daysData), [daysData]);
+
+  return {
+    daysData,
+    fileNames,
+    errors,
+    processingState,
+    aggregatedRecords,
+    processFileForDay,
+    removeFileForDay,
+    resetAll
+  };
 }

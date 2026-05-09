@@ -117,3 +117,44 @@ export function formatMinutes(minutes) {
   if (m === 0) return `${h} h`;
   return `${h} h ${m} min`;
 }
+
+/**
+ * Agrega datos de asistencia de múltiples días en una lista consolidada.
+ * @param {object} daysData - Objeto donde las llaves son días (lunes, martes, etc.) y los valores son arreglos de registros procesados.
+ * @returns {object[]} Lista de estudiantes con sus asistencias consolidadas.
+ */
+export function aggregateAttendanceData(daysData) {
+  const studentsMap = {};
+
+  for (const [day, records] of Object.entries(daysData)) {
+    if (!records || !Array.isArray(records)) continue;
+    
+    for (const record of records) {
+      const email = record.email;
+      if (!studentsMap[email]) {
+        studentsMap[email] = {
+          email,
+          nombre: record.nombre,
+          apellido: record.apellido,
+          attendance: {}
+        };
+      }
+      
+      // Store the record for this day
+      studentsMap[email].attendance[day] = {
+        minutes: record.minutes,
+        duracionRaw: record.duracionRaw,
+        status: record.status
+      };
+    }
+  }
+
+  // Convert to array and sort by apellido, then nombre
+  const aggregated = Object.values(studentsMap).sort((a, b) => {
+    const apellidoComp = a.apellido.localeCompare(b.apellido, 'es', { sensitivity: 'base' });
+    if (apellidoComp !== 0) return apellidoComp;
+    return a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' });
+  });
+
+  return aggregated;
+}
