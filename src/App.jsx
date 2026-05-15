@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { GraduationCap, RefreshCw, BookOpen, Clock } from 'lucide-react';
+import { GraduationCap, RefreshCw, BookOpen, Clock, Settings } from 'lucide-react';
 import DayDropZone from './components/DayDropZone';
 import MetricsRow from './components/MetricsRow';
 import AttendanceTable from './components/AttendanceTable';
 import ThresholdEditor from './components/ThresholdEditor';
+import SettingsModal from './components/SettingsModal';
 import { useAttendanceFiles } from './hooks/useAttendanceFile';
+import { useSettings } from './hooks/useSettings';
 
 const DEFAULT_THRESHOLD = 180; // 3 hours in minutes
 
@@ -24,8 +26,8 @@ function Header({ hasData, onReset, onOpenConfig }) {
       position: 'sticky',
       top: 0,
       zIndex: 50,
-      borderBottom: '1px solid rgba(255,255,255,0.06)',
-      background: 'rgba(7,7,15,0.85)',
+      borderBottom: '1px solid var(--border-subtle)',
+      background: 'var(--bg-card)',
       backdropFilter: 'blur(16px)',
       WebkitBackdropFilter: 'blur(16px)',
     }}>
@@ -36,10 +38,11 @@ function Header({ hasData, onReset, onOpenConfig }) {
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             width: 32, height: 32, borderRadius: 8,
-            background: 'linear-gradient(135deg, var(--brand-maroon) 0%, #8a1f36 100%)',
-            boxShadow: '0 0 20px rgba(104,21,39,0.3)',
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-subtle)',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
           }}>
-            <GraduationCap style={{ color: '#fff', width: 18, height: 18 }} />
+            <GraduationCap style={{ color: 'var(--accent-blue)', width: 18, height: 18 }} />
           </div>
           <div>
             <h1 style={{ fontSize: '0.95rem', fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1.1, color: 'var(--text-primary)' }}>
@@ -91,6 +94,8 @@ export default function App() {
   
   const [threshold, setThreshold] = useState(DEFAULT_THRESHOLD);
   const [isConfigOpen, setConfigOpen] = useState(false);
+  const [isSettingsOpen, setSettingsOpen] = useState(false);
+  const { settings, updateSettings, updateVisibleColumns } = useSettings();
   const hasData = aggregatedRecords && aggregatedRecords.length > 0;
 
   return (
@@ -193,10 +198,38 @@ export default function App() {
               aggregatedRecords={aggregatedRecords} 
               daysData={daysData}
               thresholdMinutes={threshold} 
+              settings={settings}
             />
           </div>
         )}
       </main>
+
+      {/* Floating Action Button for Settings */}
+      <button
+        onClick={() => setSettingsOpen(true)}
+        style={{
+          position: 'fixed', bottom: 24, right: 24, zIndex: 90,
+          width: 56, height: 56, borderRadius: '50%',
+          background: 'var(--accent-blue)', color: 'var(--bg-base)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: '0 10px 25px -5px rgba(0,0,0,0.5), 0 0 15px var(--glow-1)',
+          cursor: 'pointer', border: 'none',
+          transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.05)'; e.currentTarget.style.boxShadow = '0 15px 35px -5px rgba(0,0,0,0.6), 0 0 20px var(--glow-1)'; }}
+        onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 10px 25px -5px rgba(0,0,0,0.5), 0 0 15px var(--glow-1)'; }}
+        aria-label="Abrir Configuración"
+      >
+        <Settings style={{ width: 26, height: 26 }} />
+      </button>
+
+      <SettingsModal 
+        isOpen={isSettingsOpen} 
+        onClose={() => setSettingsOpen(false)}
+        settings={settings}
+        updateSettings={updateSettings}
+        updateVisibleColumns={updateVisibleColumns}
+      />
 
       {/* Footer */}
       <footer style={{

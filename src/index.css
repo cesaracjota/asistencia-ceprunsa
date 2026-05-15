@@ -29,6 +29,64 @@
   --brand-maroon: #681527;
   --brand-gold: #bc9d80;
   --brand-navy: #1c2140;
+
+  --glow-1: rgba(104, 21, 39, 0.2);
+  --glow-2: rgba(188, 157, 128, 0.08);
+}
+
+:root.theme-light {
+  --bg-base: #f1f5f9;
+  --bg-card: rgba(255, 255, 255, 0.95);
+  --bg-card-hover: rgba(255, 255, 255, 1);
+  --border-subtle: rgba(15, 23, 42, 0.1);
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: rgba(15, 23, 42, 0.5);
+  --accent-green: #10b981;
+  --accent-red: #ef4444;
+  --accent-blue: #3b82f6;
+  --accent-amber: #f59e0b;
+  --accent-cyan: #06b6d4;
+  --brand-maroon: #9f1239;
+  --brand-gold: #b45309;
+  --glow-1: rgba(159, 18, 57, 0.08);
+  --glow-2: rgba(59, 130, 246, 0.05);
+}
+
+:root.theme-ocean {
+  --bg-base: #0f172a;
+  --bg-card: rgba(255, 255, 255, 0.04);
+  --bg-card-hover: rgba(255, 255, 255, 0.07);
+  --border-subtle: rgba(56, 189, 248, 0.2);
+  --text-primary: #f8fafc;
+  --text-secondary: #38bdf8;
+  --text-muted: rgba(248, 250, 252, 0.45);
+  --accent-green: #10b981;
+  --accent-red: #f43f5e;
+  --accent-blue: #38bdf8;
+  --accent-amber: #f59e0b;
+  --brand-maroon: #0284c7;
+  --brand-gold: #38bdf8;
+  --glow-1: rgba(14, 165, 233, 0.15);
+  --glow-2: rgba(56, 189, 248, 0.1);
+}
+
+:root.theme-forest {
+  --bg-base: #064e3b;
+  --bg-card: rgba(255, 255, 255, 0.04);
+  --bg-card-hover: rgba(255, 255, 255, 0.07);
+  --border-subtle: rgba(52, 211, 153, 0.2);
+  --text-primary: #ecfdf5;
+  --text-secondary: #6ee7b7;
+  --text-muted: rgba(236, 253, 245, 0.45);
+  --accent-green: #34d399;
+  --accent-red: #f87171;
+  --accent-blue: #6ee7b7;
+  --accent-amber: #fbbf24;
+  --brand-maroon: #047857;
+  --brand-gold: #6ee7b7;
+  --glow-1: rgba(52, 211, 153, 0.15);
+  --glow-2: rgba(16, 185, 129, 0.1);
 }
 
 html, body {
@@ -56,8 +114,8 @@ html, body {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
   background:
-    radial-gradient(ellipse 80% 50% at 20% 0%, rgba(104, 21, 39, 0.2) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 40% at 80% 100%, rgba(188, 157, 128, 0.08) 0%, transparent 60%);
+    radial-gradient(ellipse 80% 50% at 20% 0%, var(--glow-1) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 100%, var(--glow-2) 0%, transparent 60%);
   pointer-events: none;
   z-index: 0;
 }
@@ -179,6 +237,15 @@ html, body {
   padding: 0.75rem 1.25rem;
   text-align: left;
   border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-base);
+}
+
+.sticky-table-header th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bg-base);
+  box-shadow: 0 1px 0 0 var(--border-subtle);
 }
 .attendance-table tbody tr {
   transition: background-color 0.15s ease;

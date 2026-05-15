@@ -100,7 +100,7 @@ function exportToExcel({ data, activeDays, thresholdMinutes }) {
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
-export default function AttendanceTable({ aggregatedRecords, daysData, thresholdMinutes }) {
+export default function AttendanceTable({ aggregatedRecords, daysData, thresholdMinutes, settings = {} }) {
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState({ column: 'apellido', direction: 'asc' });
   const [filterStatus, setFilterStatus] = useState('all'); // all, perfect, missed
@@ -253,15 +253,14 @@ export default function AttendanceTable({ aggregatedRecords, daysData, threshold
     color: 'var(--text-secondary)',
     padding: '0.75rem 0.5rem',
     textAlign: 'left',
-    borderBottom: '1px solid rgba(255,255,255,0.06)',
+    borderBottom: '1px solid var(--border-subtle)',
     whiteSpace: 'nowrap',
-    background: 'transparent',
   };
   const tdStyle = {
     padding: '0.85rem 0.5rem',
     fontSize: '0.875rem',
     color: 'var(--text-primary)',
-    borderBottom: '1px solid rgba(255,255,255,0.04)',
+    borderBottom: '1px solid var(--border-subtle)',
   };
   const sortBtnStyle = {
     display: 'inline-flex',
@@ -376,25 +375,35 @@ export default function AttendanceTable({ aggregatedRecords, daysData, threshold
       </div>
 
       {/* ── Table ── */}
-      <div style={{ overflowX: 'auto' }}>
+      <div style={{ 
+        overflowX: 'auto',
+        overflowY: settings?.stickyHeader ? 'auto' : 'visible',
+        maxHeight: settings?.stickyHeader ? 'calc(100vh - 180px)' : 'none'
+      }}>
         <table
           style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0 }}
           aria-label="Tabla de registro de asistencia"
         >
-          <thead>
+          <thead className={settings?.stickyHeader ? 'sticky-table-header' : ''}>
             <tr>
               <th style={{ ...thStyle, width: 44, textAlign: 'center' }}>#</th>
-              <th style={{...thStyle, paddingLeft: '1rem'}}>
-                <button style={sortBtnStyle} onClick={() => handleSort('apellido')}>
-                  Apellido <SortIcon column="apellido" sort={sort} />
-                </button>
-              </th>
-              <th style={thStyle}>
-                <button style={sortBtnStyle} onClick={() => handleSort('nombre')}>
-                  Nombre <SortIcon column="nombre" sort={sort} />
-                </button>
-              </th>
-              <th style={thStyle} className="hidden sm:table-cell">Correo</th>
+              {settings?.visibleColumns?.apellido !== false && (
+                <th style={{...thStyle, paddingLeft: '1rem'}}>
+                  <button style={sortBtnStyle} onClick={() => handleSort('apellido')}>
+                    Apellido <SortIcon column="apellido" sort={sort} />
+                  </button>
+                </th>
+              )}
+              {settings?.visibleColumns?.nombre !== false && (
+                <th style={thStyle}>
+                  <button style={sortBtnStyle} onClick={() => handleSort('nombre')}>
+                    Nombre <SortIcon column="nombre" sort={sort} />
+                  </button>
+                </th>
+              )}
+              {settings?.visibleColumns?.email !== false && (
+                <th style={thStyle} className="hidden sm:table-cell">Correo</th>
+              )}
               
               {/* Dynamic Day Columns */}
               {activeDays.map(day => (
@@ -436,11 +445,17 @@ export default function AttendanceTable({ aggregatedRecords, daysData, threshold
                     <td style={{ ...tdStyle, textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.75rem' }}>
                       {i + 1}
                     </td>
-                    <td style={{ ...tdStyle, fontWeight: 600, paddingLeft: '1rem' }}>{r.apellido}</td>
-                    <td style={{ ...tdStyle, color: '#cbd5e1' }}>{r.nombre}</td>
-                    <td style={{ ...tdStyle, color: 'var(--text-muted)', fontSize: '0.75rem', maxWidth: '150px' }} className="hidden sm:table-cell">
-                      <div className="truncate" title={r.email}>{r.email}</div>
-                    </td>
+                    {settings?.visibleColumns?.apellido !== false && (
+                      <td style={{ ...tdStyle, fontWeight: 600, paddingLeft: '1rem' }}>{r.apellido}</td>
+                    )}
+                    {settings?.visibleColumns?.nombre !== false && (
+                      <td style={{ ...tdStyle, color: '#cbd5e1' }}>{r.nombre}</td>
+                    )}
+                    {settings?.visibleColumns?.email !== false && (
+                      <td style={{ ...tdStyle, color: 'var(--text-muted)', fontSize: '0.75rem', maxWidth: '150px' }} className="hidden sm:table-cell">
+                        <div className="truncate" title={r.email}>{r.email}</div>
+                      </td>
+                    )}
                     
                     {/* Active Days Badges */}
                     {activeDays.map(day => {
