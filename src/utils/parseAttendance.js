@@ -119,29 +119,37 @@ export function formatMinutes(minutes) {
 }
 
 /**
- * Agrega datos de asistencia de múltiples días en una lista consolidada.
- * @param {object} daysData - Objeto donde las llaves son días (lunes, martes, etc.) y los valores son arreglos de registros procesados.
- * @returns {object[]} Lista de estudiantes con sus asistencias consolidadas.
+ * Normaliza una cadena removiendo acentos, espacios y pasándola a minúsculas para comparaciones robustas.
  */
-export function aggregateAttendanceData(daysData) {
-  const studentsMap = {};
+function normalizeName(str) {
+  if (!str) return '';
+  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "").toLowerCase();
+}
 
+/**
+ * Agrega datos de asistencia de múltiples días en una lista consolidada.
+ * Si se proporciona un masterTemplate, la lista devuelta sigue exactamente ese orden y contenido.
+ * @param {object} daysData - Objeto donde las llaves son días (lunes, martes, etc.) y los valores son arreglos de registros procesados.
+ * @param {Array} masterTemplate - (Opcional) Arreglo con la plantilla maestra de estudiantes.
+ * @returns {object} Un objeto con { aggregated: [], unmatched: [] }
+ */
+export function aggregateAttendanceData(daysData, masterTemplate = null) {
+  // Primero reunimos a todos los que entraron al Meet en un mapa
+  const meetMap = {};
   for (const [day, records] of Object.entries(daysData)) {
     if (!records || !Array.isArray(records)) continue;
-    
     for (const record of records) {
-      const email = record.email;
-      if (!studentsMap[email]) {
-        studentsMap[email] = {
-          email,
+      const key = `${normalizeName(record.apellido)}|${normalizeName(record.nombre)}`;
+      if (!meetMap[key]) {
+        meetMap[key] = {
+          email: record.email,
           nombre: record.nombre,
           apellido: record.apellido,
-          attendance: {}
+          attendance: {},
+          matched: false
         };
       }
-      
-      // Store the record for this day
-      studentsMap[email].attendance[day] = {
+      meetMap[key].attendance[day] = {
         minutes: record.minutes,
         duracionRaw: record.duracionRaw,
         status: record.status
@@ -149,12 +157,53 @@ export function aggregateAttendanceData(daysData) {
     }
   }
 
-  // Convert to array and sort by apellido, then nombre
-  const aggregated = Object.values(studentsMap).sort((a, b) => {
+  // Si existe una plantilla maestra, cruzamos los datos
+  if (masterTemplate && masterTemplate.length > 0) {
+    const aggregated = masterTemplate.map(student => {
+      const result = {
+        email: '', 
+        nombre: student.nombres,
+        apellido: student.apellidos,
+        orden: student.orden,
+        attendance: {}
+      };
+
+      const targetApellido = normalizeName(student.apellidos);
+      const targetNombre = normalizeName(student.nombres);
+      const key = `${targetApellido}|${targetNombre}`;
+
+      if (meetMap[key]) {
+        meetMap[key].matched = true; // Lo marcamos como reconocido
+        result.email = meetMap[key].email || result.email;
+        for (const day of Object.keys(daysData)) {
+          if (meetMap[key].attendance[day]) {
+            result.attendance[day] = meetMap[key].attendance[day];
+          } else {
+            result.attendance[day] = { minutes: 0, duracionRaw: '0 min', status: 'F' };
+          }
+        }
+      } else {
+        // Estudiante de la plantilla no entró al Meet
+        for (const day of Object.keys(daysData)) {
+          result.attendance[day] = { minutes: 0, duracionRaw: '0 min', status: 'F' };
+        }
+      }
+
+      return result;
+    });
+
+    // Extraemos los que no hicieron match (invitados, docentes, etc)
+    const unmatched = Object.values(meetMap).filter(p => !p.matched);
+
+    return { aggregated, unmatched };
+  }
+
+  // Comportamiento original si no hay plantilla
+  const aggregated = Object.values(meetMap).sort((a, b) => {
     const apellidoComp = a.apellido.localeCompare(b.apellido, 'es', { sensitivity: 'base' });
     if (apellidoComp !== 0) return apellidoComp;
     return a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' });
   });
 
-  return aggregated;
+  return { aggregated, unmatched: [] };
 }

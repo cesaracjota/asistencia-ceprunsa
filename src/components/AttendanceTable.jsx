@@ -102,10 +102,26 @@ function exportToExcel({ data, activeDays, thresholdMinutes }) {
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function AttendanceTable({ aggregatedRecords, daysData, thresholdMinutes, settings = {} }) {
   const [search, setSearch] = useState('');
-  const [sort, setSort] = useState({ column: 'apellido', direction: 'asc' });
+  const [sort, setSort] = useState({ column: 'orden', direction: 'asc' });
   const [filterStatus, setFilterStatus] = useState('all'); // all, perfect, missed
   const [pdfLoading, setPdfLoading] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
+  const [copiedDay, setCopiedDay] = useState(null);
+
+  const handleCopyColumn = (dayId) => {
+    // Usamos 'evaluated' para garantizar que se copie toda la lista en el orden de la Plantilla Maestra (sin importar los filtros de búsqueda visuales)
+    const textToCopy = evaluated.map(r => {
+      const dayData = r.attendance[dayId];
+      return dayData ? dayData.status : 'F';
+    }).join('\n');
+
+    navigator.clipboard.writeText(textToCopy).then(() => {
+      setCopiedDay(dayId);
+      setTimeout(() => setCopiedDay(null), 2000);
+    }).catch(err => {
+      console.error('Failed to copy: ', err);
+    });
+  };
 
   // Determine which days have data to show only those columns
   const activeDays = useMemo(() => {
@@ -247,20 +263,22 @@ export default function AttendanceTable({ aggregatedRecords, daysData, threshold
   // Shared styles
   const thStyle = {
     fontSize: '0.65rem',
-    fontWeight: 600,
-    letterSpacing: '0.12em',
+    fontWeight: 700,
+    letterSpacing: '0.08em',
     textTransform: 'uppercase',
     color: 'var(--text-secondary)',
-    padding: '0.75rem 0.5rem',
+    padding: '1rem 0.75rem',
     textAlign: 'left',
     borderBottom: '1px solid var(--border-subtle)',
+    borderRight: '1px solid var(--border-subtle)',
     whiteSpace: 'nowrap',
   };
   const tdStyle = {
-    padding: '0.85rem 0.5rem',
+    padding: '0.85rem 0.75rem',
     fontSize: '0.875rem',
     color: 'var(--text-primary)',
     borderBottom: '1px solid var(--border-subtle)',
+    borderRight: '1px solid var(--border-subtle)',
   };
   const sortBtnStyle = {
     display: 'inline-flex',
@@ -407,12 +425,31 @@ export default function AttendanceTable({ aggregatedRecords, daysData, threshold
               
               {/* Dynamic Day Columns */}
               {activeDays.map(day => (
-                <th key={day.id} style={{ ...thStyle, textAlign: 'center', width: 44 }}>
-                  {day.short}
+                <th key={day.id} style={{ ...thStyle, textAlign: 'center', width: 60, verticalAlign: 'bottom' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                    <span>{day.short}</span>
+                    <button 
+                      onClick={() => handleCopyColumn(day.id)}
+                      title={`Copiar columna de ${day.label}`}
+                      style={{
+                        background: copiedDay === day.id ? 'var(--accent-green)' : 'rgba(96, 165, 250, 0.1)',
+                        border: copiedDay === day.id ? 'none' : '1px solid rgba(96, 165, 250, 0.2)', 
+                        borderRadius: 4, cursor: 'pointer',
+                        padding: '3px 8px', fontSize: '0.6rem', fontWeight: 700,
+                        color: copiedDay === day.id ? '#000' : 'var(--accent-blue)',
+                        transition: 'all 0.2s',
+                        whiteSpace: 'nowrap'
+                      }}
+                      onMouseEnter={e => { if (copiedDay !== day.id) e.currentTarget.style.background = 'rgba(96, 165, 250, 0.2)' }}
+                      onMouseLeave={e => { if (copiedDay !== day.id) e.currentTarget.style.background = 'rgba(96, 165, 250, 0.1)' }}
+                    >
+                      {copiedDay === day.id ? 'Copiado!' : 'Copiar'}
+                    </button>
+                  </div>
                 </th>
               ))}
 
-              <th style={{ ...thStyle, textAlign: 'center', width: 80, paddingRight: '1rem' }}>
+              <th style={{ ...thStyle, textAlign: 'center', width: 80, paddingRight: '1rem', borderLeft: '1px solid var(--border-subtle)' }}>
                 <button style={sortBtnStyle} onClick={() => handleSort('totalA')}>
                   Total <SortIcon column="totalA" sort={sort} />
                 </button>
@@ -434,11 +471,11 @@ export default function AttendanceTable({ aggregatedRecords, daysData, threshold
                     id={`row-${r.email}`}
                     key={`${r.email}-${i}`}
                     onClick={() => setSelectedRow(isSelected ? null : r.email)}
-                    onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
-                    onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = 'transparent'; }}
+                    onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = 'var(--bg-card-hover)'; }}
+                    onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = i % 2 === 0 ? 'var(--bg-zebra)' : 'transparent'; }}
                     style={{ 
                       transition: 'background 0.15s', 
-                      background: isSelected ? 'rgba(188, 157, 128, 0.15)' : 'transparent',
+                      background: isSelected ? 'var(--glow-1)' : (i % 2 === 0 ? 'var(--bg-zebra)' : 'transparent'),
                       cursor: 'pointer'
                     }}
                   >
@@ -449,7 +486,7 @@ export default function AttendanceTable({ aggregatedRecords, daysData, threshold
                       <td style={{ ...tdStyle, fontWeight: 600, paddingLeft: '1rem' }}>{r.apellido}</td>
                     )}
                     {settings?.visibleColumns?.nombre !== false && (
-                      <td style={{ ...tdStyle, color: '#cbd5e1' }}>{r.nombre}</td>
+                      <td style={{ ...tdStyle, color: 'var(--text-secondary)' }}>{r.nombre}</td>
                     )}
                     {settings?.visibleColumns?.email !== false && (
                       <td style={{ ...tdStyle, color: 'var(--text-muted)', fontSize: '0.75rem', maxWidth: '150px' }} className="hidden sm:table-cell">
@@ -470,7 +507,7 @@ export default function AttendanceTable({ aggregatedRecords, daysData, threshold
                       )
                     })}
 
-                    <td style={{ ...tdStyle, textAlign: 'center', fontWeight: 800, paddingRight: '1rem' }}>
+                    <td style={{ ...tdStyle, textAlign: 'center', fontWeight: 800, paddingRight: '1rem', background: 'var(--bg-zebra)', borderLeft: '1px solid var(--border-subtle)' }}>
                       <span style={{ color: r.totalA > 0 ? 'var(--accent-green)' : 'var(--text-muted)' }}>
                         {r.totalA}
                       </span>

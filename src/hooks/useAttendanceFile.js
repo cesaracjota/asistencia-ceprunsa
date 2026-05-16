@@ -5,7 +5,7 @@ import { processAttendanceData, aggregateAttendanceData } from '../utils/parseAt
 /**
  * Custom hook to handle multiple file readings via XLSX by day of the week.
  */
-export function useAttendanceFiles() {
+export function useAttendanceFiles(masterTemplate = null) {
   const [daysData, setDaysData] = useState({});
   const [fileNames, setFileNames] = useState({});
   const [errors, setErrors] = useState({});
@@ -84,7 +84,7 @@ export function useAttendanceFiles() {
     setProcessingState({});
   }, []);
 
-  const aggregatedRecords = useMemo(() => aggregateAttendanceData(daysData), [daysData]);
+  const { aggregated: aggregatedRecords, unmatched: unmatchedRecords } = useMemo(() => aggregateAttendanceData(daysData, masterTemplate), [daysData, masterTemplate]);
 
   return {
     daysData,
@@ -92,6 +92,7 @@ export function useAttendanceFiles() {
     errors,
     processingState,
     aggregatedRecords,
+    unmatchedRecords,
     processFileForDay,
     removeFileForDay,
     resetAll

@@ -32,6 +32,7 @@
 
   --glow-1: rgba(104, 21, 39, 0.2);
   --glow-2: rgba(188, 157, 128, 0.08);
+  --bg-zebra: rgba(255, 255, 255, 0.015);
 }
 
 :root.theme-light {
@@ -51,6 +52,7 @@
   --brand-gold: #b45309;
   --glow-1: rgba(159, 18, 57, 0.08);
   --glow-2: rgba(59, 130, 246, 0.05);
+  --bg-zebra: rgba(0, 0, 0, 0.03);
 }
 
 :root.theme-ocean {
@@ -69,6 +71,7 @@
   --brand-gold: #38bdf8;
   --glow-1: rgba(14, 165, 233, 0.15);
   --glow-2: rgba(56, 189, 248, 0.1);
+  --bg-zebra: rgba(255, 255, 255, 0.015);
 }
 
 :root.theme-forest {
@@ -87,6 +90,7 @@
   --brand-gold: #6ee7b7;
   --glow-1: rgba(52, 211, 153, 0.15);
   --glow-2: rgba(16, 185, 129, 0.1);
+  --bg-zebra: rgba(255, 255, 255, 0.015);
 }
 
 html, body {

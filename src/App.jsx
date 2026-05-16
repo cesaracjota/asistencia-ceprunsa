@@ -1,12 +1,14 @@
 import { useState } from 'react';
-import { GraduationCap, RefreshCw, BookOpen, Clock, Settings } from 'lucide-react';
+import { GraduationCap, RefreshCw, BookOpen, Clock, Settings, CheckCircle2 } from 'lucide-react';
 import DayDropZone from './components/DayDropZone';
 import MetricsRow from './components/MetricsRow';
 import AttendanceTable from './components/AttendanceTable';
+import UnmatchedTable from './components/UnmatchedTable';
 import ThresholdEditor from './components/ThresholdEditor';
 import SettingsModal from './components/SettingsModal';
 import { useAttendanceFiles } from './hooks/useAttendanceFile';
 import { useSettings } from './hooks/useSettings';
+import { useMasterTemplate } from './hooks/useMasterTemplate';
 
 const DEFAULT_THRESHOLD = 180; // 3 hours in minutes
 
@@ -81,16 +83,18 @@ function Header({ hasData, onReset, onOpenConfig }) {
 
 // ─── App ─────────────────────────────────────────────────────────────────────
 export default function App() {
+  const { masterTemplate, processMasterFile, clearMasterTemplate, templateError } = useMasterTemplate();
   const { 
     daysData, 
     fileNames, 
     errors, 
     processingState, 
     aggregatedRecords, 
+    unmatchedRecords,
     processFileForDay, 
     removeFileForDay, 
     resetAll 
-  } = useAttendanceFiles();
+  } = useAttendanceFiles(masterTemplate);
   
   const [threshold, setThreshold] = useState(DEFAULT_THRESHOLD);
   const [isConfigOpen, setConfigOpen] = useState(false);
@@ -102,7 +106,7 @@ export default function App() {
     <div className="bg-glow" style={{ minHeight: '100vh', position: 'relative' }}>
       <Header hasData={hasData} onReset={resetAll} onOpenConfig={() => setConfigOpen(true)} />
 
-      <main style={{ maxWidth: 1200, margin: '0 auto', padding: '2.5rem 1.5rem', position: 'relative', zIndex: 1 }}>
+      <main style={{ maxWidth: 1200, margin: '0 auto', padding: '2.5rem 1.5rem', position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: '2rem' }}>
 
         {/* Hero Section (only when no data) */}
         {!hasData && (
@@ -145,8 +149,65 @@ export default function App() {
           </div>
         )}
 
+        {/* Master Template Section */}
+        <div className="fade-up">
+          <div className="glass-card" style={{ padding: '1.5rem', border: masterTemplate ? '1px solid rgba(96,165,250,0.5)' : undefined }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+              <div>
+                <h3 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
+                  Plantilla Maestra
+                </h3>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                  {masterTemplate 
+                    ? <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><CheckCircle2 style={{ width: 14, height: 14, color: 'var(--accent-green)' }} /> Plantilla activa: {masterTemplate.length} estudiantes. El orden estricto está configurado.</span>
+                    : 'Sube tu Excel con las columnas: orden, apellidos, nombres para activar el copiado perfecto.'}
+                </p>
+                {templateError && (
+                  <p style={{ fontSize: '0.75rem', color: '#f87171', marginTop: 4 }}>{templateError}</p>
+                )}
+              </div>
+              <div style={{ display: 'flex', gap: 10 }}>
+                {masterTemplate && (
+                  <button onClick={clearMasterTemplate} className="btn-ghost" style={{ fontSize: '0.75rem', padding: '6px 12px', color: '#f87171' }}>
+                    Quitar Plantilla
+                  </button>
+                )}
+                <label style={{ 
+                  cursor: 'pointer', 
+                  fontSize: '0.75rem', 
+                  padding: '6px 16px', 
+                  background: 'var(--accent-blue)', 
+                  color: 'var(--bg-base)', 
+                  borderRadius: 6,
+                  fontWeight: 600,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  boxShadow: '0 4px 10px rgba(96,165,250,0.2)',
+                  transition: 'transform 0.15s ease'
+                }}
+                onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
+                onMouseLeave={e => e.currentTarget.style.transform = 'none'}
+                >
+                  {masterTemplate ? 'Actualizar Plantilla' : 'Subir Plantilla Excel'}
+                  <input 
+                    type="file" 
+                    accept=".xlsx, .xls, .csv" 
+                    style={{ display: 'none' }} 
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        processMasterFile(e.target.files[0]);
+                        e.target.value = null;
+                      }
+                    }}
+                  />
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Days Grid - Always visible so user can add/remove days */}
-        <div className={`fade-up ${hasData ? 'mb-6' : ''}`}>
+        <div className="fade-up">
           <div className="glass-card" style={{ padding: '1.5rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
               <h3 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
@@ -199,6 +260,12 @@ export default function App() {
               daysData={daysData}
               thresholdMinutes={threshold} 
               settings={settings}
+            />
+
+            {/* Unmatched Intruders Table */}
+            <UnmatchedTable 
+              unmatchedRecords={unmatchedRecords}
+              daysData={daysData}
             />
           </div>
         )}
